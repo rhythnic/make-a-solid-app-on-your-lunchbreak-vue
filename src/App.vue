@@ -1,28 +1,126 @@
 <template>
   <div id="app">
-    <img alt="Vue logo" src="./assets/logo.png">
-    <HelloWorld msg="Welcome to Your Vue.js App"/>
+    <Header :session="session" @login="popupLogin" @logout="logout" />
+    <main>
+      <section>
+        <h2>Profile</h2>
+        <p id="profileId-input-container">
+          <label for="profile">Profile:</label>
+          <input v-model="profileId" id="profile">
+          <button @click="loadProfile">View</button>
+        </p>
+        <Profile :person="person"/>
+      </section>
+      <section>
+        <h2>Friends</h2>
+        <ul>
+          <li v-for="friend in friends" :key="friend.id">
+            <Profile :person="person" />
+          </li>
+        </ul>
+      </section>
+    </main>
   </div>
 </template>
 
 <script>
-import HelloWorld from './components/HelloWorld.vue'
+import auth from 'solid-auth-client'
+import rdflib from 'rdflib'
+import Header from './components/Header'
+import Profile from './components/Profile'
+
+// Set up a local data store and associated data fetcher
+const FOAF = rdflib.Namespace('http://xmlns.com/foaf/0.1/')
+const store = rdflib.graph()
+const fetcher = new rdflib.Fetcher(store)
 
 export default {
   name: 'app',
   components: {
-    HelloWorld
+    Header,
+    Profile
+  },
+  data () {
+    return {
+      session: null,
+      profileId: '',
+      person: null,
+      friends: []
+    }
+  },
+  created () {
+    auth.trackSession(session => {
+      this.session = session
+      if (session) {
+        alert(`Logged in as ${this.session.webId}`)
+        this.profileId = this.session.webId
+      }
+    })
+  },
+  methods: {
+    async popupLogin () {
+      let popupUri = 'https://solid.community/common/popup.html'
+      try {
+        await auth.popupLogin({ popupUri })
+      } catch (err) {
+        alert(err.message)
+      }
+    },
+    async logout () {
+      this.profileId = ''
+      try {
+        await auth.logout()
+      } catch (err) {
+        alert(err.message)
+      }
+    },
+    async loadProfile () {
+      // Load the person's data into the store
+      this.person = null
+      this.friends = []
+      const { profileId } = this
+      try {
+        await fetcher.load(profileId)
+        this.person = this.getPerson(profileId)
+        const friendIds = store.each(rdflib.sym(profileId), FOAF('knows'))
+        console.log(friendIds)
+        await Promise.all(friendIds.map(id => fetcher.load(id)))
+        this.friends = friendIds.map(this.getPerson)
+      } catch (err) {
+        alert(err.message)
+      }
+    },
+    getPerson (id, props = ['name']) {
+      const symbol = store.sym(id)
+      return props.reduce((acc, x) => {
+        const prop = store.any(symbol, FOAF(x))
+        if (prop) acc[x] = prop.value
+        return acc
+      }, { id })
+    }
   }
 }
 </script>
 
-<style>
-#app {
-  font-family: 'Avenir', Helvetica, Arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  text-align: center;
-  color: #2c3e50;
-  margin-top: 60px;
-}
+<style scoped>
+  #profileId-input-container, main {
+    display: flex;
+    flex-flow: row wrap;
+  }
+
+  #profileId-input-container {
+    align-items: center;
+  }
+
+  main {
+    padding: 16px;
+  }
+
+  main > section {
+    flex-basis: 50%;
+  }
+
+  #profileId-input-container > *:not(:first-child) {
+    margin: 0 8px;
+  }
 </style>

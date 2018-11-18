@@ -1,5 +1,5 @@
 {
-  "name": "solid-tut",
+  "name": "solid-app-on-your-lunch-break-vue",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -8,6 +8,8 @@
     "lint": "vue-cli-service lint"
   },
   "dependencies": {
+    "rdflib": "^0.19.1",
+    "solid-auth-client": "^2.2.12",
     "vue": "^2.5.17"
   },
   "devDependencies": {
