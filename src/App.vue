@@ -5,9 +5,9 @@
       <section>
         <h2>Profile</h2>
         <p id="profileId-input-container">
-          <label for="profile">Profile:</label>
-          <input v-model="profileId" id="profile">
-          <button @click="loadProfile">View</button>
+          <label for="profile-input">Web ID:</label>
+          <input v-model="profileId" id="profile-input">
+          <button @click="loadProfile(profileId)">View</button>
         </p>
         <Profile :person="person"/>
       </section>
@@ -15,7 +15,7 @@
         <h2>Friends</h2>
         <ul>
           <li v-for="friend in friends" :key="friend.id">
-            <Profile :person="person" />
+            <a @click="loadProfile(friend.id)">{{friend.name}}</a>
           </li>
         </ul>
       </section>
@@ -74,18 +74,17 @@ export default {
         alert(err.message)
       }
     },
-    async loadProfile () {
+    async loadProfile (profileId) {
       // Load the person's data into the store
       this.person = null
       this.friends = []
-      const { profileId } = this
+      this.profileId = profileId
       try {
         await fetcher.load(profileId)
         this.person = this.getPerson(profileId)
-        const friendIds = store.each(rdflib.sym(profileId), FOAF('knows'))
-        console.log(friendIds)
-        await Promise.all(friendIds.map(id => fetcher.load(id)))
-        this.friends = friendIds.map(this.getPerson)
+        const friends = store.each(rdflib.sym(profileId), FOAF('knows')).slice(0,3)
+        await Promise.all(friends.map(friend => fetcher.load(friend)))
+        this.friends = friends.map(this.getPerson)
       } catch (err) {
         alert(err.message)
       }
@@ -110,6 +109,11 @@ export default {
 
   #profileId-input-container {
     align-items: center;
+  }
+
+  #profile-input {
+    width: 90%;
+    max-width: 400px;
   }
 
   main {
