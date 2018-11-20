@@ -24,14 +24,15 @@ export default {
     flex-flow: row wrap;
     justify-content: space-between;
     align-items: center;
+    margin: 0 16px;
   }
 
-  header > * {
-    margin: 0 16px;
+  h1 {
+    margin: 0;
   }
 
   #webId {
     display: inline-block;
-    margin: 0 16px;
+    margin: 8px 16px 8px 0;
   }
 </style>

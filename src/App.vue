@@ -101,7 +101,7 @@ export default {
 }
 </script>
 
-<style scoped>
+<style>
   #profileId-input-container, main {
     display: flex;
     flex-flow: row wrap;
@@ -122,9 +122,10 @@ export default {
 
   main > section {
     flex-basis: 50%;
+    min-width: 400px;
   }
 
-  #profileId-input-container > *:not(:first-child) {
-    margin: 0 8px;
+  #profileId-input-container > * {
+    margin: 8px 8px 8px 0;
   }
 </style>
