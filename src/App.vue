@@ -25,14 +25,14 @@
 
 <script>
 import auth from 'solid-auth-client'
-import rdflib from 'rdflib'
+import $rdf from 'rdflib'
 import Header from './components/Header'
 import Profile from './components/Profile'
 
 // Set up a local data store and associated data fetcher
-const FOAF = rdflib.Namespace('http://xmlns.com/foaf/0.1/')
-const store = rdflib.graph()
-const fetcher = new rdflib.Fetcher(store)
+const FOAF = $rdf.Namespace('http://xmlns.com/foaf/0.1/')
+const store = $rdf.graph()
+const fetcher = new $rdf.Fetcher(store)
 
 export default {
   name: 'app',
@@ -82,9 +82,9 @@ export default {
       try {
         await fetcher.load(profileId)
         this.person = this.getPerson(profileId)
-        const friends = store.each(rdflib.sym(profileId), FOAF('knows')).slice(0,3)
+        const friends = store.each($rdf.sym(profileId), FOAF('knows'))
         await Promise.all(friends.map(friend => fetcher.load(friend)))
-        this.friends = friends.map(this.getPerson)
+        this.friends = friends.map(x => this.getPerson(x.value))
       } catch (err) {
         alert(err.message)
       }
